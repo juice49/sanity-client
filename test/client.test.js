@@ -1578,6 +1578,32 @@ test('Patch is available on client and can be used without instantiated client',
   t.end()
 })
 
+test('Patch can be created without client and passed to mutate()', (t) => {
+  const patch = new sanityClient.Patch('abc123').set({foo: 'bar'})
+
+  const mutations = [
+    {
+      patch: {
+        id: 'abc123',
+        set: {
+          foo: 'bar',
+        },
+      },
+    },
+  ]
+
+  nock(projectHost())
+    .post('/v1/data/mutate/foo?returnIds=true&returnDocuments=true&visibility=sync', {
+      mutations,
+    })
+    .reply(200, {results: [{id: 'abc123', operation: 'update'}]})
+
+  getClient()
+    .mutate(patch)
+    .catch(t.ifError)
+    .then(() => t.end())
+})
+
 test('patch commit() throws if called without a client', (t) => {
   const patch = new sanityClient.Patch('foo.bar')
   t.throws(() => patch.dec({bar: 2}).commit(), /client.*mutate/i)
